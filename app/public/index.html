@@ -1,16 +1,344 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Training DevOps</title>
-    <link rel="stylesheet" href="stylesheet/style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simple App — Item Tracker</title>
+  <style>
+    :root{
+      --bg:#ffffff; --card:#f7f7f8; --text:#1f2328; --muted:#6b7280; --border:#e5e7eb; --accent:#2563eb; --danger:#ef4444; --success:#16a34a;
+    }
+    .dark{
+      --bg:#0b1020; --card:#131a2a; --text:#e5e7eb; --muted:#9aa4b2; --border:#223; --accent:#60a5fa; --danger:#f87171; --success:#22c55e;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      background:var(--bg); color:var(--text); line-height:1.45;
+    }
+    .container{max-width:1000px; margin:0 auto; padding:20px}
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px;
+    }
+    h1{font-size:20px; margin:0}
+    .tag{font-size:12px; padding:2px 8px; border-radius:999px; background:var(--card); border:1px solid var(--border); color:var(--muted)}
+    .row{display:flex; flex-wrap:wrap; gap:12px}
+    .card{
+      background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px;
+    }
+    .toolbar{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+    input, button{
+      font:inherit;
+    }
+    input[type="text"], input[type="number"]{
+      background:#fff0; color:var(--text); border:1px solid var(--border); border-radius:10px; padding:10px 12px; outline:none; width:100%;
+    }
+    .btn{
+      border:1px solid var(--border); background:#fff0; color:var(--text); padding:10px 12px; border-radius:10px; cursor:pointer;
+    }
+    .btn.primary{ background:var(--accent); color:white; border-color:transparent }
+    .btn.danger{ background:var(--danger); color:white; border-color:transparent }
+    .btn.ghost{ background:#fff0 }
+    .btn:disabled{opacity:.5; cursor:not-allowed}
+    .grid{display:grid; gap:10px}
+    @media (min-width:720px){
+      .grid-cols-4{grid-template-columns:2fr 1fr 1fr auto}
+    }
+    table{width:100%; border-collapse:collapse; overflow:hidden; border-radius:12px; border:1px solid var(--border); background:var(--card)}
+    th, td{padding:10px 12px; border-top:1px solid var(--border); text-align:left}
+    thead th{border-top:none; font-weight:600; color:var(--muted)}
+    tbody tr:hover{background:rgba(127,127,127,.06)}
+    .right{text-align:right}
+    .muted{color:var(--muted)}
+    .flex{display:flex; gap:10px; align-items:center}
+    .spacer{flex:1}
+    .pill{padding:2px 8px; border-radius:999px; border:1px solid var(--border); color:var(--muted); font-size:12px}
+    .total{font-weight:700}
+    .footer{margin-top:14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .toast{
+      position:fixed; right:16px; bottom:16px; padding:10px 12px; background:var(--card); border:1px solid var(--border); border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.15); display:none;
+    }
+    .switch{
+      display:inline-flex; align-items:center; gap:8px; cursor:pointer; user-select:none;
+      padding:6px 10px; border:1px solid var(--border); border-radius:999px; background:var(--card);
+    }
+    .switch input{display:none}
+    .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:2px 6px; font-size:12px}
+  </style>
 </head>
 <body>
-    <img class="logo" src="./images/idn-logo.png" alt="idn-logo">
-     <h1>Belajar Devops</h1>
+<div class="container">
+  <header>
+    <div class="flex">
+      <h1>Simple App — Item Tracker</h1>
+      <span class="tag">HTML only</span>
+    </div>
+    <label class="switch" title="Toggle tema">
+      <input id="toggleTheme" type="checkbox" />
+      <span>🌙/☀️</span>
+      <span class="pill">Tema</span>
+    </label>
+  </header>
 
-     <h2> Hi, it's trial</h2>
+  <!-- Toolbar -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="toolbar">
+      <input id="search" type="text" placeholder="Cari item... (nama)" />
+      <div class="spacer"></div>
+      <button class="btn" id="exportBtn" title="Salin data ke clipboard">Export</button>
+      <button class="btn" id="importBtn" title="Tempel data JSON untuk import">Import</button>
+      <button class="btn danger" id="clearBtn" title="Hapus semua data">Clear</button>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="grid grid-cols-4">
+      <div>
+        <label class="muted">Nama</label>
+        <input id="name" type="text" placeholder="Contoh: Dimsum Mentai" />
+      </div>
+      <div>
+        <label class="muted">Harga (Rp)</label>
+        <input id="price" type="number" min="0" step="100" placeholder="10000" />
+      </div>
+      <div>
+        <label class="muted">Qty</label>
+        <input id="qty" type="number" min="1" step="1" placeholder="1" />
+      </div>
+      <div style="display:flex; align-items:flex-end; gap:8px">
+        <button id="saveBtn" class="btn primary" style="width:100%">Simpan</button>
+      </div>
+    </div>
+    <div class="muted" style="margin-top:8px">Hint: cepat input → tekan <span class="kbd">Enter</span> pada kolom Qty untuk simpan.</div>
+  </div>
+
+  <!-- Tabel -->
+  <div class="card">
+    <table id="table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nama</th>
+          <th class="right">Harga</th>
+          <th class="right">Qty</th>
+          <th class="right">Subtotal</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <!-- rows injected -->
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <span class="muted">Items: <span id="count">0</span></span>
+      <div class="spacer"></div>
+      <span class="muted">Total:</span>
+      <span id="total" class="total">Rp 0</span>
+    </div>
+  </div>
+
+  <p class="muted" style="margin-top:16px">
+    Data tersimpan di <strong>localStorage</strong> (hanya di browser & device ini).
+  </p>
+</div>
+
+<div class="toast" id="toast">Tersalin!</div>
+
+<script>
+(function(){
+  // ===== Utilities =====
+  const rupiah = (n)=> {
+    const v = Number(n||0);
+    return new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', maximumFractionDigits:0}).format(v);
+  };
+  const qs = (s)=> document.querySelector(s);
+  const qsa = (s)=> Array.from(document.querySelectorAll(s));
+  const STORAGE_KEY = 'simple-app-items-v1';
+  const THEME_KEY = 'simple-app-theme';
+  let items = [];
+
+  // ===== Theme =====
+  function setTheme(mode){
+    document.documentElement.classList.toggle('dark', mode === 'dark');
+    localStorage.setItem(THEME_KEY, mode);
+    qs('#toggleTheme').checked = (mode === 'dark');
+  }
+  function initTheme(){
+    const saved = localStorage.getItem(THEME_KEY);
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(saved || (prefersDark ? 'dark' : 'light'));
+  }
+
+  // ===== Storage =====
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      items = raw ? JSON.parse(raw) : [];
+    }catch(e){
+      items = [];
+    }
+  }
+  function save(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  }
+
+  // ===== Render =====
+  function render(){
+    const tbody = qs('#tbody');
+    tbody.innerHTML = '';
+    const term = (qs('#search').value || '').toLowerCase().trim();
+
+    let total = 0;
+    let idx = 0;
+
+    items
+      .map((it, i)=> ({...it, _i:i}))
+      .filter(it => !term || (it.name||'').toLowerCase().includes(term))
+      .forEach((it, row) => {
+        idx++;
+        const tr = document.createElement('tr');
+        const subtotal = (Number(it.price)||0) * (Number(it.qty)||0);
+        total += subtotal;
+
+        tr.innerHTML = `
+          <td>${idx}</td>
+          <td>${escapeHtml(it.name||'')}</td>
+          <td class="right">${rupiah(it.price||0)}</td>
+          <td class="right">${it.qty||0}</td>
+          <td class="right">${rupiah(subtotal)}</td>
+          <td>
+            <button class="btn ghost" data-edit="${it._i}">Edit</button>
+            <button class="btn danger" data-del="${it._i}">Hapus</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+    qs('#count').textContent = String(items.length);
+    qs('#total').textContent = rupiah(total);
+  }
+
+  function escapeHtml(s){
+    return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ===== Actions =====
+  function addOrUpdate(){
+    const name = qs('#name').value.trim();
+    const price = Math.max(0, Number(qs('#price').value || 0));
+    const qty = Math.max(1, Number(qs('#qty').value || 1));
+    if(!name){ qs('#name').focus(); return }
+    const editingIndex = Number(qs('#saveBtn').dataset.editing ?? -1);
+    if(editingIndex >= 0){
+      items[editingIndex] = { name, price, qty };
+      qs('#saveBtn').textContent = 'Simpan';
+      delete qs('#saveBtn').dataset.editing;
+      showToast('Item diperbarui');
+    }else{
+      items.push({ name, price, qty });
+      showToast('Item ditambahkan');
+    }
+    save();
+    clearForm();
+    render();
+    qs('#name').focus();
+  }
+
+  function clearForm(){
+    qs('#name').value = '';
+    qs('#price').value = '';
+    qs('#qty').value = '';
+  }
+
+  function editAt(i){
+    const it = items[i];
+    if(!it) return;
+    qs('#name').value = it.name || '';
+    qs('#price').value = it.price || 0;
+    qs('#qty').value = it.qty || 1;
+    const btn = qs('#saveBtn');
+    btn.textContent = 'Update';
+    btn.dataset.editing = String(i);
+    qs('#name').focus();
+  }
+
+  function deleteAt(i){
+    if(!items[i]) return;
+    items.splice(i,1);
+    save(); render();
+  }
+
+  function clearAll(){
+    if(!items.length) return;
+    if(confirm('Hapus semua data?')) { items = []; save(); render(); showToast('Semua data dihapus'); }
+  }
+
+  function exportData(){
+    const json = JSON.stringify(items, null, 2);
+    navigator.clipboard?.writeText(json).then(()=>{
+      showToast('Data tersalin ke clipboard');
+    }).catch(()=>{
+      // fallback: prompt
+      alert(json);
+    });
+  }
+
+  function importData(){
+    const json = prompt('Tempel JSON yang valid di sini:');
+    if(!json) return;
+    try{
+      const arr = JSON.parse(json);
+      if(!Array.isArray(arr)) throw new Error('JSON harus berupa array');
+      items = arr.map(x => ({
+        name: String(x.name||''),
+        price: Math.max(0, Number(x.price||0)),
+        qty: Math.max(1, Number(x.qty||1)),
+      }));
+      save(); render(); showToast('Import berhasil');
+    }catch(e){
+      alert('Import gagal: ' + e.message);
+    }
+  }
+
+  // ===== Toast =====
+  let toastTimer;
+  function showToast(msg){
+    const el = qs('#toast');
+    el.textContent = msg;
+    el.style.display = 'block';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> el.style.display = 'none', 1600);
+  }
+
+  // ===== Events =====
+  function bind(){
+    qs('#saveBtn').addEventListener('click', addOrUpdate);
+    qs('#qty').addEventListener('keydown', e=> { if(e.key==='Enter') addOrUpdate(); });
+    qs('#tbody').addEventListener('click', e=>{
+      const t = e.target;
+      if(!(t instanceof HTMLElement)) return;
+      const di = t.getAttribute('data-del');
+      const ei = t.getAttribute('data-edit');
+      if(di !== null){ deleteAt(Number(di)); }
+      if(ei !== null){ editAt(Number(ei)); }
+    });
+    qs('#search').addEventListener('input', render);
+    qs('#clearBtn').addEventListener('click', clearAll);
+    qs('#exportBtn').addEventListener('click', exportData);
+    qs('#importBtn').addEventListener('click', importData);
+    qs('#toggleTheme').addEventListener('change', (e)=>{
+      setTheme(e.target.checked ? 'dark' : 'light');
+    });
+  }
+
+  // ===== Init =====
+  initTheme();
+  load();
+  bind();
+  render();
+})();
+</script>
 </body>
 </html>
