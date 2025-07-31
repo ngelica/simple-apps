@@ -31,11 +31,7 @@ pipeline {
             steps {
                 sh'''
                 cd app
-                sonar-scanner \ 
-                    -Dsonar.projectKey=simple-virya \ 
-                    -Dsonar.sources=. \ 
-                    -Dsonar.host.url=http://172.23.8.125:9000 \ 
-                    -Dsonar.login=sqp_58d8bb42f47e2b44d9b40753c81337f8bc32d577 
+                sonar-scanner -Dsonar.projectKey=simple-virya -Dsonar.sources=. -Dsonar.host.url=http://172.23.8.125:9000 -Dsonar.login=sqp_58d8bb42f47e2b44d9b40753c81337f8bc32d577 
                 '''
             }
         }
